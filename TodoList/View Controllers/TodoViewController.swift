@@ -22,30 +22,22 @@ final class TodoViewController: UITableViewController, StoryboardInstantiable {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        titleTextField.addTarget(self, action: #selector(textEditingChanged), for: .editingChanged)
-        titleTextField.addTarget(self, action: #selector(returnButtonPressed), for: .primaryActionTriggered)
-        
-        cancelButton.target = self
-        cancelButton.action = #selector(cancelButtonTapped)
-        
-        isCompleteButton.addTarget(self, action: #selector(isCompleteButtonTapped), for: .primaryActionTriggered)
-        
         updateSaveButtonState()
     }
     
-    @objc func textEditingChanged() {
+    @IBAction func textEditingChanged() {
         updateSaveButtonState()
     }
     
-    @objc func returnButtonPressed() {
+    @IBAction func returnButtonPressed() {
         titleTextField.resignFirstResponder()
     }
     
-    @objc func isCompleteButtonTapped() {
+    @IBAction func isCompleteButtonTapped() {
         isCompleteButton.isSelected = !isCompleteButton.isSelected
     }
     
-    @objc func cancelButtonTapped() {
+    @IBAction func cancelButtonTapped() {
         delegate?.cancelButtonTapped(todoListVC: self)
     }
     

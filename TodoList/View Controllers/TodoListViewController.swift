@@ -26,12 +26,9 @@ final class TodoListViewController: UIViewController, StoryboardInstantiable {
     private func configTableView() {
         tableView.delegate = self
         tableView.dataSource = self
-        
-        addTodoButton.target = self
-        addTodoButton.action = #selector(addButtonTapped)
     }
     
-    @objc private func addButtonTapped() {
+    @IBAction private func addButtonTapped() {
         delegate?.addTodoButtonTapped(self)
     }
     

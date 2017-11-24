@@ -44,7 +44,11 @@
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
                     <navigationItem key="navigationItem" title="My To-do's" id="eWW-Tv-YTu">
-                        <barButtonItem key="rightBarButtonItem" systemItem="add" id="O2w-Kh-ElL"/>
+                        <barButtonItem key="rightBarButtonItem" systemItem="add" id="O2w-Kh-ElL">
+                            <connections>
+                                <action selector="addButtonTapped" destination="BYZ-38-t0r" id="Ecf-bb-NNL"/>
+                            </connections>
+                        </barButtonItem>
                     </navigationItem>
                     <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
                     <connections>
@@ -82,12 +86,19 @@
                                                     </constraints>
                                                     <state key="normal" image="Unchecked"/>
                                                     <state key="selected" image="Checked"/>
+                                                    <connections>
+                                                        <action selector="isCompleteButtonTapped" destination="Ojc-kM-cEu" eventType="primaryActionTriggered" id="VvD-ng-N3S"/>
+                                                    </connections>
                                                 </button>
                                                 <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Remind me to..." textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="r76-rb-HPm">
                                                     <rect key="frame" x="60" y="13.5" width="299" height="17"/>
                                                     <nil key="textColor"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                                     <textInputTraits key="textInputTraits"/>
+                                                    <connections>
+                                                        <action selector="returnButtonPressed" destination="Ojc-kM-cEu" eventType="primaryActionTriggered" id="zNR-TR-K9L"/>
+                                                        <action selector="textEditingChanged" destination="Ojc-kM-cEu" eventType="editingChanged" id="pbs-Fm-Vuz"/>
+                                                    </connections>
                                                 </textField>
                                             </subviews>
                                             <constraints>
@@ -176,7 +187,11 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" title="New Todo" id="czT-lu-Ezo">
-                        <barButtonItem key="leftBarButtonItem" systemItem="cancel" id="Asd-4V-u7z"/>
+                        <barButtonItem key="leftBarButtonItem" systemItem="cancel" id="Asd-4V-u7z">
+                            <connections>
+                                <action selector="cancelButtonTapped" destination="Ojc-kM-cEu" id="C5Y-XN-z9O"/>
+                            </connections>
+                        </barButtonItem>
                         <barButtonItem key="rightBarButtonItem" systemItem="save" id="gYd-7u-eZy"/>
                     </navigationItem>
                     <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
