@@ -9,25 +9,26 @@
 import UIKit
 import Foundation
 
-class AppCoordinator {
+class AppCoordinator: Coordinator {
+    var rootVC: UINavigationController
+    var children: [Coordinator] = []
     var window: UIWindow
-    var rootVC: UINavigationController!
+    var todoListVC: TodoListViewController
+    
     var todoController: TodoController
     
     init(window: UIWindow) {
         self.window = window
         self.todoController = TodoController()
+        self.todoListVC = TodoListViewController.instantiate()
+        self.rootVC = UINavigationController(rootViewController: todoListVC)
     }
     
     func start() {
-        let todoListVC = TodoListViewController.instantiate()
         todoListVC.delegate = self
+        rootVC.navigationBar.prefersLargeTitles = true
         
-        let navigationVC = UINavigationController(rootViewController: todoListVC)
-        navigationVC.navigationBar.prefersLargeTitles = true
-        rootVC = navigationVC
-        
-        window.rootViewController = navigationVC
+        window.rootViewController = rootVC
         window.makeKeyAndVisible()
         
         let todos = todoController.todos
@@ -37,21 +38,32 @@ class AppCoordinator {
 
 extension AppCoordinator: TodoListViewControllerDelegate {
     func addTodoButtonTapped(_ todoListViewController: TodoListViewController) {
-        let todoVC = TodoViewController.instantiate()
-        todoVC.delegate = self
-        
-        let navigationVC = UINavigationController(rootViewController: todoVC)
-        rootVC.show(navigationVC, sender: nil)
+        let coordinator = AddTodoCoordinator(rootVC: rootVC)
+        coordinator.delegate = self
+        coordinator.start()
+        addChild(coordinator)
     }
     
     func deleteTodo(_ todoListViewController: TodoListViewController, at index: Int, callback: (Bool,[Todo]) -> ()) {
         let todos = todoController.deleteTodo(at: index)
         callback(true,todos)
     }
+    
+    func selectedTodo(_ todo: Todo) {
+        let todoVC = TodoViewController.instantiate()
+        todoVC.todo = todo
+//        todoVC.delegate = self
+        rootVC.show(todoVC, sender: nil)
+    }
 }
 
-extension AppCoordinator: TodoViewControllerDelegate {
-    func cancelButtonTapped(todoListVC: TodoViewController) {
-        rootVC.dismiss(animated: true)
+extension AppCoordinator: AddTodoCoordinatorDelegate {
+    func cancelled(coordinator: AddTodoCoordinator) {
+        removeChild(coordinator)
+    }
+    
+    func addedTodo(_ todo: Todo, coordinator: AddTodoCoordinator) {
+        let todos = todoController.addTodo(todo)
+        todoListVC.load(todos: todos)
     }
 }

@@ -20,6 +20,11 @@ class TodoController {
         return todos
     }
     
+    func addTodo(_ todo: Todo) -> [Todo] {
+        todos.append(todo)
+        return todos
+    }
+    
     private static func loadLocalTodos() -> [Todo]? {
         return nil
     }

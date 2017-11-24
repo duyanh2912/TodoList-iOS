@@ -28,15 +28,20 @@ final class TodoListViewController: UIViewController, StoryboardInstantiable {
         tableView.dataSource = self
     }
     
-    @IBAction private func addButtonTapped() {
-        delegate?.addTodoButtonTapped(self)
-    }
-    
     func load(todos: [Todo]) {
         self.todos = todos
         if isViewLoaded {
             tableView.reloadData()
         }
+    }
+    
+    func insertTodo(_ todo: Todo) {
+        todos.append(todo)
+        tableView.insertRows(at: [IndexPath(row: todos.count-1, section:0)], with: .automatic)
+    }
+    
+    @IBAction private func addButtonTapped() {
+        delegate?.addTodoButtonTapped(self)
     }
 }
 
@@ -63,6 +68,10 @@ extension TodoListViewController: UITableViewDataSource {
         }
         return
     }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        delegate?.selectedTodo(todos[indexPath.row])
+    }
 }
 
 extension TodoListViewController: UITableViewDelegate {
@@ -72,4 +81,5 @@ extension TodoListViewController: UITableViewDelegate {
 protocol TodoListViewControllerDelegate {
     func deleteTodo(_ todoListViewController: TodoListViewController ,at index: Int, callback: (_ success: Bool, _ todos: [Todo]) -> ())
     func addTodoButtonTapped(_ todoListViewController: TodoListViewController)
+    func selectedTodo(_ todo: Todo)
 }

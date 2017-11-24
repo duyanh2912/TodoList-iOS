@@ -13,4 +13,11 @@ struct Todo {
     var isComplete: Bool
     var dueDate: Date
     var notes: String?
+    
+    static let dueDateFormatter: DateFormatter = {
+        let dateFormatter = DateFormatter()
+        dateFormatter.timeStyle = .short
+        dateFormatter.dateStyle = .short
+        return dateFormatter
+    }()
 }
