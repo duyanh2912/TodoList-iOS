@@ -7,13 +7,22 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 final class TodoListViewController: UIViewController, StoryboardInstantiable {
+    struct ReactiveEvents {
+        var didTapAddButton = PublishSubject<Void>()
+        var didDeleteTodo = PublishSubject<Int>()
+        var didSelectTodo = PublishSubject<Int>()
+    }
+    
     static var storyboardName: AppStoryboard = .main
-    var delegate: TodoListViewControllerDelegate?
+    var events = ReactiveEvents()
     
     private var cellIdentifier = "TodoCell"
-    private var todos = [Todo]()
+    private var todos = Variable([Todo]())
+    private var disposeBag = DisposeBag()
     
     @IBOutlet weak var addTodoButton: UIBarButtonItem!
     @IBOutlet weak var tableView: UITableView!
@@ -21,65 +30,35 @@ final class TodoListViewController: UIViewController, StoryboardInstantiable {
     override func viewDidLoad() {
         super.viewDidLoad()
         configTableView()
+        addTodoButton.rx.tap.bind(to: events.didTapAddButton).disposed(by: disposeBag)
     }
     
     private func configTableView() {
-        tableView.delegate = self
-        tableView.dataSource = self
-    }
-    
-    func load(todos: [Todo]) {
-        self.todos = todos
-        if isViewLoaded {
-            tableView.reloadData()
-        }
-    }
-    
-    func insertTodo(_ todo: Todo) {
-        todos.append(todo)
-        tableView.insertRows(at: [IndexPath(row: todos.count-1, section:0)], with: .automatic)
-    }
-    
-    @IBAction private func addButtonTapped() {
-        delegate?.addTodoButtonTapped(self)
-    }
-}
-
-extension TodoListViewController: UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return todos.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath)
-        let todo = todos[indexPath.row]
-        cell.textLabel?.text = todo.title
-        return cell
-    }
-    
-    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            delegate?.deleteTodo(self, at: indexPath.row) { [weak self] success, todo in
-                if success {
-                    self?.todos = todo
-                    self?.tableView.deleteRows(at: [indexPath], with: .automatic)
-                }
+        // Cell for indexPath
+        todos.asObservable()
+            .bind(to: tableView.rx.items(cellIdentifier: cellIdentifier)) { index, todo, cell in
+                cell.textLabel?.text = todo.title
             }
-        }
-        return
+            .disposed(by: disposeBag)
+        
+        // Selected cell at indexPath
+        tableView.rx.itemSelected
+            .map { $0.row }
+            .bind(to: events.didSelectTodo)
+            .disposed(by: disposeBag)
+        
+        // Commit delete at indexPath
+        tableView.rx.itemDeleted
+            .map { $0.row }
+            .bind(to: events.didDeleteTodo)
+            .disposed(by: disposeBag)
     }
     
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        delegate?.selectedTodo(todos[indexPath.row])
+    func load(todos: Variable<[Todo]>) {
+        self.todos = todos
     }
-}
-
-extension TodoListViewController: UITableViewDelegate {
     
-}
-
-protocol TodoListViewControllerDelegate {
-    func deleteTodo(_ todoListViewController: TodoListViewController ,at index: Int, callback: (_ success: Bool, _ todos: [Todo]) -> ())
-    func addTodoButtonTapped(_ todoListViewController: TodoListViewController)
-    func selectedTodo(_ todo: Todo)
+    deinit {
+        print("\(self) deinit")
+    }
 }

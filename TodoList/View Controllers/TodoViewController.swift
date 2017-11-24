@@ -7,6 +7,8 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 extension IndexPath {
     fileprivate static let dueDate = IndexPath(row: 1, section: 0)
@@ -14,12 +16,18 @@ extension IndexPath {
 }
 
 final class TodoViewController: UITableViewController, StoryboardInstantiable {
+    struct ReactiveEvents {
+        var didCancel = PublishSubject<Void>()
+        var didSave = PublishSubject<Todo>()
+    }
+    
     static var storyboardName: AppStoryboard = .main
     
+    var events = ReactiveEvents()
     var todo: Todo?
-    var isDatePickerHidden = true
-    var dueDateIndexPath = IndexPath(row: 1, section: 0)
-    var delegate: TodoViewControllerDelegate?
+    private var isDatePickerHidden = true
+    private var dueDateIndexPath = IndexPath(row: 1, section: 0)
+    private var disposeBag = DisposeBag()
     
     @IBOutlet weak var isCompleteButton: UIButton!
     @IBOutlet weak var titleTextField: UITextField!
@@ -44,6 +52,11 @@ final class TodoViewController: UITableViewController, StoryboardInstantiable {
         navigationItem.largeTitleDisplayMode = .never
         updateDueDateLabel(date: dueDatePicker.date)
         updateSaveButtonState()
+        
+        cancelButton.rx.tap.bind(to: events.didCancel).disposed(by: disposeBag)
+        saveButton.rx.tap
+            .map { [unowned self] in self.getTodo() }
+            .bind(to: events.didSave).disposed(by: disposeBag)
     }
     
     private func updateSaveButtonState() {
@@ -70,15 +83,7 @@ final class TodoViewController: UITableViewController, StoryboardInstantiable {
     @IBAction func isCompleteButtonTapped() {
         isCompleteButton.isSelected = !isCompleteButton.isSelected
     }
-    
-    @IBAction func cancelButtonTapped() {
-        delegate?.cancelButtonTapped(todoListVC: self)
-    }
-    
-    @IBAction func saveButtonTapped(_ sender: UIBarButtonItem) {
-        delegate?.saveButtonTapped(todoListVC: self, todo: getTodo())
-    }
-    
+ 
     @IBAction func datePickerChanged(_ sender: UIDatePicker) {
         updateDueDateLabel(date: dueDatePicker.date)
     }
@@ -105,10 +110,9 @@ final class TodoViewController: UITableViewController, StoryboardInstantiable {
             tableView.endUpdates()
         }
     }
-}
-
-protocol TodoViewControllerDelegate {
-    func cancelButtonTapped(todoListVC: TodoViewController)
-    func saveButtonTapped(todoListVC: TodoViewController, todo: Todo)
+    
+    deinit {
+        print("\(self) deinit")
+    }
 }
 

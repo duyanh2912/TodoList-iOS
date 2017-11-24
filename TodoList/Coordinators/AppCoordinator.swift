@@ -7,14 +7,12 @@
 //
 
 import UIKit
-import Foundation
+import RxSwift
 
-class AppCoordinator: Coordinator {
+class AppCoordinator: BaseCoordinator<Void> {
     var rootVC: UINavigationController
-    var children: [Coordinator] = []
     var window: UIWindow
     var todoListVC: TodoListViewController
-    
     var todoController: TodoController
     
     init(window: UIWindow) {
@@ -24,46 +22,54 @@ class AppCoordinator: Coordinator {
         self.rootVC = UINavigationController(rootViewController: todoListVC)
     }
     
-    func start() {
-        todoListVC.delegate = self
+    override func start() -> Observable<Void> {
         rootVC.navigationBar.prefersLargeTitles = true
+        
+        let todos = todoController.todos
+        todoListVC.load(todos: todos)
+        
+        todoListVC.events.didTapAddButton
+            .flatMapLatest { [unowned self] in self.showAddTodo() }
+            .unwrap()
+            .bind { [unowned self] in self.todoController.addTodo($0) }
+            .disposed(by: disposeBag)
+        
+        todoListVC.events.didSelectTodo
+            .flatMapLatest { [unowned self] in self.showEditTodo(index: $0) }
+            .unwrap()
+            .bind { [unowned self] in self.todoController.replaceTodo($0.1, at: $0.0) }
+            .disposed(by: disposeBag)
+        
+        todoListVC.events.didDeleteTodo
+            .bind { [unowned self] in self.todoController.deleteTodo(at: $0) }
+            .disposed(by: disposeBag)
         
         window.rootViewController = rootVC
         window.makeKeyAndVisible()
         
-        let todos = todoController.todos
-        todoListVC.load(todos: todos)
+        return Observable.never()
     }
-}
-
-extension AppCoordinator: TodoListViewControllerDelegate {
-    func addTodoButtonTapped(_ todoListViewController: TodoListViewController) {
+    
+    func showAddTodo() -> Observable<Todo?> {
         let coordinator = AddTodoCoordinator(rootVC: rootVC)
-        coordinator.delegate = self
-        coordinator.start()
-        addChild(coordinator)
+        return coordinate(to: coordinator)
+            .map { result in
+                switch result {
+                case .cancel: return nil
+                case .save(let todo): return todo
+                }
+            }
     }
     
-    func deleteTodo(_ todoListViewController: TodoListViewController, at index: Int, callback: (Bool,[Todo]) -> ()) {
-        let todos = todoController.deleteTodo(at: index)
-        callback(true,todos)
-    }
-    
-    func selectedTodo(_ todo: Todo) {
-        let todoVC = TodoViewController.instantiate()
-        todoVC.todo = todo
-//        todoVC.delegate = self
-        rootVC.show(todoVC, sender: nil)
-    }
-}
-
-extension AppCoordinator: AddTodoCoordinatorDelegate {
-    func cancelled(coordinator: AddTodoCoordinator) {
-        removeChild(coordinator)
-    }
-    
-    func addedTodo(_ todo: Todo, coordinator: AddTodoCoordinator) {
-        let todos = todoController.addTodo(todo)
-        todoListVC.load(todos: todos)
+    func showEditTodo(index: Int) -> Observable<(Int,Todo)?> {
+        let todo = todoController.todos.value[index]
+        let coordinator = EditTodoCoordinator(navigationController: rootVC, todo: todo, todoIndex: index)
+        return coordinate(to: coordinator)
+            .map { result in
+                switch result {
+                case .cancelled: return nil
+                case .edited(let index, let todo): return (index,todo)
+                }
+            }
     }
 }

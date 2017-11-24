@@ -7,22 +7,25 @@
 //
 
 import Foundation
+import RxSwift
 
 class TodoController {
-    var todos: [Todo]
+    var todos = Variable([Todo]())
     
     init() {
-        todos = TodoController.loadLocalTodos() ?? TodoController.loadSampleTodos()
+        todos.value = TodoController.loadLocalTodos() ?? TodoController.loadSampleTodos()
     }
     
-    func deleteTodo(at index: Int) -> [Todo] {
-        todos.remove(at: index)
-        return todos
+    func deleteTodo(at index: Int) {
+        todos.value.remove(at: index)
     }
     
-    func addTodo(_ todo: Todo) -> [Todo] {
-        todos.append(todo)
-        return todos
+    func addTodo(_ todo: Todo) {
+        todos.value.append(todo)
+    }
+    
+    func replaceTodo(_ todo: Todo, at index: Int) {
+        todos.value[index] = todo
     }
     
     private static func loadLocalTodos() -> [Todo]? {

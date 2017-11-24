@@ -7,39 +7,31 @@
 //
 
 import UIKit
+import RxSwift
 
-class AddTodoCoordinator: Coordinator {
+enum AddTodoCoordinationResult {
+    case cancel
+    case save(Todo)
+}
+
+class AddTodoCoordinator: BaseCoordinator<AddTodoCoordinationResult> {
     var rootVC: UIViewController
-    var delegate: AddTodoCoordinatorDelegate?
-    var children: [Coordinator] = []
     
     init(rootVC: UIViewController) {
         self.rootVC = rootVC
-        self.children = []
+        super.init()
     }
     
-    func start() {
+    override func start() -> Observable<CoordinationResult> {
         let todoVC = TodoViewController.instantiate()
-        todoVC.delegate = self
-        
         let navigationVC = UINavigationController(rootViewController: todoVC)
         rootVC.show(navigationVC, sender: nil)
+        
+        let cancel = todoVC.events.didCancel.map { CoordinationResult.cancel }
+        let save = todoVC.events.didSave.map { CoordinationResult.save($0) }
+        
+        return Observable.merge(cancel,save).take(1).do(onNext: { [unowned self] _ in
+            self.rootVC.dismiss(animated: true)
+        })
     }
-}
-
-extension AddTodoCoordinator: TodoViewControllerDelegate {
-    func cancelButtonTapped(todoListVC: TodoViewController) {
-        rootVC.dismiss(animated: true)
-        delegate?.cancelled(coordinator: self)
-    }
-    
-    func saveButtonTapped(todoListVC: TodoViewController, todo: Todo) {
-        rootVC.dismiss(animated: true)
-        delegate?.addedTodo(todo, coordinator: self)
-    }
-}
-
-protocol AddTodoCoordinatorDelegate {
-    func cancelled(coordinator: AddTodoCoordinator)
-    func addedTodo(_ todo: Todo, coordinator: AddTodoCoordinator)
 }
