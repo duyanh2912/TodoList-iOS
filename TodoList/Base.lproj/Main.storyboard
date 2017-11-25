@@ -44,11 +44,13 @@
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
                     <navigationItem key="navigationItem" title="My To-do's" id="eWW-Tv-YTu">
+                        <barButtonItem key="leftBarButtonItem" title="Edit" id="t3n-Yk-Za8"/>
                         <barButtonItem key="rightBarButtonItem" systemItem="add" id="O2w-Kh-ElL"/>
                     </navigationItem>
                     <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
                     <connections>
                         <outlet property="addTodoButton" destination="O2w-Kh-ElL" id="6CN-rM-Vx9"/>
+                        <outlet property="editButton" destination="t3n-Yk-Za8" id="L3T-zR-kHi"/>
                         <outlet property="tableView" destination="Ndg-iB-G2T" id="lnQ-IR-svO"/>
                     </connections>
                 </viewController>

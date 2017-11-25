@@ -50,8 +50,10 @@ class BaseCoordinator<ResultType> {
     /// - Returns: Result of `start()` method.
     func coordinate<T>(to coordinator: BaseCoordinator<T>) -> Observable<T> {
         store(coordinator: coordinator)
-        return coordinator.start()
-            .do(onNext: { [weak self] _ in self?.free(coordinator: coordinator) })
+        let result = coordinator.start().share()
+        result.bind { [weak self] _ in self?.free(coordinator: coordinator) }.disposed(by: disposeBag)
+        
+        return result
     }
     
     /// Starts job of the coordinator.

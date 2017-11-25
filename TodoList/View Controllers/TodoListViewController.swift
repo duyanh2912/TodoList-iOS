@@ -10,7 +10,7 @@ import UIKit
 import RxSwift
 import RxCocoa
 
-final class TodoListViewController: UIViewController, StoryboardInstantiable {
+final class TodoListViewController: UIViewController, StoryboardInstantiable, UIGestureRecognizerDelegate {
     struct ReactiveEvents {
         var didTapAddButton = PublishSubject<Void>()
         var didDeleteTodo = PublishSubject<Int>()
@@ -18,19 +18,51 @@ final class TodoListViewController: UIViewController, StoryboardInstantiable {
     }
     
     static var storyboardName: AppStoryboard = .main
-    var events = ReactiveEvents()
-    
     private var cellIdentifier = "TodoCell"
+    
+    var events = ReactiveEvents()
     private var todos = Variable([Todo]())
+    private var isTableViewEditing = Variable(false)
     private var disposeBag = DisposeBag()
     
+    @IBOutlet weak var editButton: UIBarButtonItem!
     @IBOutlet weak var addTodoButton: UIBarButtonItem!
     @IBOutlet weak var tableView: UITableView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.navigationController?.interactivePopGestureRecognizer?.delegate = self
         configTableView()
+        bindAddTodoButton()
+        bindEditTodoButton()
+        bindTableViewEditing()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        if let indexPath = tableView.indexPathForSelectedRow {
+            tableView.deselectRow(at: indexPath, animated: true)
+        }
+    }
+    
+    private func bindTableViewEditing() {
+        let editing = isTableViewEditing.asObservable().share()
+        editing
+            .bind { [unowned self] in self.tableView.setEditing($0, animated: true) }
+            .disposed(by: disposeBag)
+        editing
+            .map { return $0 ? "Done" : "Edit" }
+            .bind(to: editButton.rx.title)
+            .disposed(by: disposeBag)
+    }
+    
+    private func bindAddTodoButton() {
         addTodoButton.rx.tap.bind(to: events.didTapAddButton).disposed(by: disposeBag)
+    }
+    
+    private func bindEditTodoButton() {
+        editButton.rx.tap
+            .bind { [unowned self] in self.isTableViewEditing.value = !self.isTableViewEditing.value }
+            .disposed(by: disposeBag)
     }
     
     private func configTableView() {
@@ -53,7 +85,7 @@ final class TodoListViewController: UIViewController, StoryboardInstantiable {
             .bind(to: events.didDeleteTodo)
             .disposed(by: disposeBag)
     }
-    
+  
     func load(todos: Variable<[Todo]>) {
         self.todos = todos
     }

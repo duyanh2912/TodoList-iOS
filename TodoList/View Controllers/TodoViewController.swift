@@ -114,5 +114,10 @@ final class TodoViewController: UITableViewController, StoryboardInstantiable {
     deinit {
         print("\(self) deinit")
     }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        events.didCancel.onNext(())
+    }
 }
 
