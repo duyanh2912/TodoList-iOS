@@ -56,6 +56,12 @@ final class TodoListViewController: UIViewController, StoryboardInstantiable, UI
             .map { return $0 ? "Done" : "Edit" }
             .bind(to: editButton.rx.title)
             .disposed(by: disposeBag)
+        editing
+            .map { $0 ? UIFont.boldSystemFont(ofSize: 17) : UIFont.systemFont(ofSize: 17) }
+            .bind { [unowned self] in
+                self.editButton.setTitleTextAttributes([NSAttributedStringKey.font: $0], for: .normal)
+            }
+            .disposed(by: disposeBag)
     }
     
     private func bindAddTodoButton() {
@@ -94,6 +100,8 @@ final class TodoListViewController: UIViewController, StoryboardInstantiable, UI
             .map { $0.row }
             .bind(to: events.didDeleteTodo)
             .disposed(by: disposeBag)
+        
+        tableView.rx.setDelegate(self).disposed(by: disposeBag)
     }
   
     func load(todos: Variable<[Todo]>) {
@@ -102,5 +110,15 @@ final class TodoListViewController: UIViewController, StoryboardInstantiable, UI
     
     deinit {
         print("\(self) deinit")
+    }
+}
+
+extension TodoListViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, willBeginEditingRowAt indexPath: IndexPath) {
+        isTableViewEditing.value = true
+    }
+    
+    func tableView(_ tableView: UITableView, didEndEditingRowAt indexPath: IndexPath?) {
+        isTableViewEditing.value = false
     }
 }
