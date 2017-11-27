@@ -44,6 +44,10 @@ class AppCoordinator: BaseCoordinator<Void> {
             .bind { [unowned self] in self.todoController.deleteTodo(at: $0) }
             .disposed(by: disposeBag)
         
+        todoListVC.events.didToggleTodo
+            .bind { [unowned self] in self.todoController.toggleTodo(at: $0) }
+            .disposed(by: disposeBag)
+    
         window.rootViewController = rootVC
         window.makeKeyAndVisible()
         

@@ -10,6 +10,9 @@ import Foundation
 import RxSwift
 
 class TodoController {
+    static let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+    static let archiveURL = documentsDirectory.appendingPathComponent("todos").appendingPathExtension(".plist")
+    
     var todos = Variable([Todo]())
     
     init() {
@@ -18,18 +21,35 @@ class TodoController {
     
     func deleteTodo(at index: Int) {
         todos.value.remove(at: index)
+        TodoController.save(todos: todos.value)
     }
     
     func addTodo(_ todo: Todo) {
         todos.value.append(todo)
+        TodoController.save(todos: todos.value)
     }
     
     func replaceTodo(_ todo: Todo, at index: Int) {
         todos.value[index] = todo
+        TodoController.save(todos: todos.value)
+    }
+    
+    func toggleTodo(at index: Int) {
+        todos.value[index].isComplete = !todos.value[index].isComplete
+        TodoController.save(todos: todos.value)
     }
     
     private static func loadLocalTodos() -> [Todo]? {
+        if let data = try? Data(contentsOf: archiveURL), let todos = try? PropertyListDecoder().decode([Todo].self, from: data) {
+            return todos
+        }
         return nil
+    }
+    
+    private static func save(todos: [Todo]) {
+        let encoder = PropertyListEncoder()
+        let data = try? encoder.encode(todos)
+        try? data?.write(to: archiveURL, options: .noFileProtection)
     }
     
     private static func loadSampleTodos() -> [Todo] {
