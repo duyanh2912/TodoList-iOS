@@ -9,6 +9,7 @@
 import UIKit
 import RxSwift
 import RxCocoa
+import RxDataSources
 
 final class TodoListViewController: UIViewController, StoryboardInstantiable, UIGestureRecognizerDelegate {
     struct ReactiveEvents {
@@ -38,16 +39,18 @@ final class TodoListViewController: UIViewController, StoryboardInstantiable, UI
         bindTableViewEditing()
     }
     
-    override func viewWillAppear(_ animated: Bool) {
+    override func viewDidDisappear(_ animated: Bool) {
         if let indexPath = tableView.indexPathForSelectedRow {
-            tableView.deselectRow(at: indexPath, animated: true)
+            tableView.deselectRow(at: indexPath, animated: false)
         }
     }
     
     private func bindTableViewEditing() {
         let editing = isTableViewEditing.asObservable().share()
         editing
-            .bind { [unowned self] in self.tableView.setEditing($0, animated: true) }
+            .bind { [unowned self] in
+                self.tableView.setEditing($0, animated: true)
+            }
             .disposed(by: disposeBag)
         editing
             .map { return $0 ? "Done" : "Edit" }
@@ -66,11 +69,18 @@ final class TodoListViewController: UIViewController, StoryboardInstantiable, UI
     }
     
     private func configTableView() {
-        // Cell for indexPath
-        todos.asObservable()
-            .bind(to: tableView.rx.items(cellIdentifier: cellIdentifier)) { index, todo, cell in
-                cell.textLabel?.text = todo.title
-            }
+        let dataSource = RxTableViewSectionedAnimatedDataSource<TodoSection>(configureCell: {
+            [unowned self] (_, tableView, indexPath, todo) -> UITableViewCell in
+            let cell = tableView.dequeueReusableCell(withIdentifier: self.cellIdentifier, for: indexPath)
+            cell.textLabel?.text = todo.title
+            return cell
+        })
+        
+        dataSource.canEditRowAtIndexPath = { _,_ in true }
+      
+        todos.asDriver()
+            .map { [TodoSection(model: 0, items: $0)] }
+            .drive(tableView.rx.items(dataSource: dataSource))
             .disposed(by: disposeBag)
         
         // Selected cell at indexPath

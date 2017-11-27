@@ -8,4 +8,5 @@ target 'TodoList' do
   # Pods for TodoList
   pod 'RxSwift'
   pod 'RxCocoa'
+  pod 'RxDataSources'
 end

@@ -6,9 +6,10 @@
 //  Copyright © 2017 Duy Anh. All rights reserved.
 //
 
-import Foundation
+import RxDataSources
 
 struct Todo {
+    let id = UUID().uuidString
     var title: String
     var isComplete: Bool
     var dueDate: Date
@@ -21,3 +22,14 @@ struct Todo {
         return dateFormatter
     }()
 }
+
+extension Todo: IdentifiableType, Equatable {
+    static func ==(lhs: Todo, rhs: Todo) -> Bool {
+        return lhs.id == rhs.id
+    }
+    
+    var identity: String { return id }
+    typealias Identity = String
+}
+
+typealias TodoSection = AnimatableSectionModel<Int,Todo>
